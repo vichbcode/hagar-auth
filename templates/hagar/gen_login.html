@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Se connecter à {{ project.name }}</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .form-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { margin-top: 0; color: #333; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; color: #666; font-size: 0.9rem; }
+        input { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 0.8rem; background: #4f46e5; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; margin-top: 1rem; }
+        button:hover { background: #4338ca; }
+        .msg { margin-top: 1rem; text-align: center; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h2>{{ project.name }} - Connexion</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>{{ project.fields[0].label if project.fields else 'Identifiant' }}</label>
+                <input type="text" name="identifier" required>
+            </div>
+            {% set password_field = project.fields | selectattr('field_type', 'equalto', 'password') | first %}
+            {% if password_field %}
+            <div class="form-group">
+                <label>{{ password_field.label }}</label>
+                <input type="password" name="password" required>
+            </div>
+            {% endif %}
+            <button type="submit">Se connecter</button>
+        </form>
+        <div id="message" class="msg"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const msgDiv = document.getElementById('message');
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/hagar/{{ project.api_token }}/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    msgDiv.style.color = 'green';
+                    msgDiv.innerText = 'Connexion réussie !';
+                    // Ici on pourrait stocker un token ou rediriger
+                    console.log('User Data:', result.user_data);
+                } else {
+                    msgDiv.style.color = 'red';
+                    msgDiv.innerText = result.error || 'Identifiants invalides';
+                }
+            } catch (err) {
+                msgDiv.style.color = 'red';
+                msgDiv.innerText = 'Erreur de connexion au serveur';
+            }
+        });
+    </script>
+</body>
+</html>
